@@ -65,8 +65,10 @@ jobs:
         pip install -r requirements-dev.txt
         
     - name: Run Tests and Coverage
+      env:
+       PYTHONPATH: .
       run: |
-        pytest -v --cov=app --cov-report=xml
+        python -m pytest -v --cov=app --cov-report=xml
         
     - name: Validate Docker Production Build
       run: |
