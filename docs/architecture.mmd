@@ -1,0 +1,52 @@
+graph TD
+    %% Define Styles
+    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef network fill:#cce5ff,stroke:#004085,stroke-width:2px;
+    classDef backend fill:#d4edda,stroke:#155724,stroke-width:2px;
+    classDef datastore fill:#fff3cd,stroke:#856404,stroke-width:2px;
+    classDef worker fill:#f8d7da,stroke:#721c24,stroke-width:2px;
+
+    %% Client and Edge
+    Client((Client HTTP)):::client
+    Nginx[Nginx Reverse Proxy\n:80]:::network
+    
+    %% API Application
+    FastAPI[FastAPI Backend\n:8000]:::backend
+    
+    subgraph Modular Monolith
+        Auth[Auth & JWT]
+        RBAC[RBAC & Tenant Context]
+        Orgs[Organizations & Projects]
+        Tasks[Tasks & OCC]
+        Reports[Reports & Idempotency]
+    end
+
+    FastAPI --> Auth
+    FastAPI --> RBAC
+    FastAPI --> Orgs
+    FastAPI --> Tasks
+    FastAPI --> Reports
+    
+    %% Background Workers
+    Celery[Celery Worker]:::worker
+    
+    %% Datastores
+    PostgreSQL[(PostgreSQL\n:5432)]:::datastore
+    Redis[(Redis\n:6379)]:::datastore
+
+    %% Flow
+    Client -->|HTTP / HTTPS| Nginx
+    Nginx -->|X-Forwarded-For| FastAPI
+    
+    %% Internal Connections
+    Auth -->|Queries/Validates| PostgreSQL
+    RBAC -->|Enforces Isolation| PostgreSQL
+    Orgs -->|CRUD| PostgreSQL
+    Tasks -->|Transactions & OCC| PostgreSQL
+    Reports -->|Idempotency| PostgreSQL
+    Reports -->|Enqueues Job| Redis
+    
+    FastAPI -->|Rate Limiting| Redis
+    
+    Redis -->|Broker| Celery
+    Celery -->|Writes Results| PostgreSQL

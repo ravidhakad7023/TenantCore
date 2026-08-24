@@ -1,0 +1,62 @@
+erDiagram
+    %% Core Tenant Models
+    User {
+        uuid id PK
+        string email
+        string hashed_password
+        boolean is_active
+    }
+    
+    Organization {
+        uuid id PK
+        string name
+        uuid owner_id FK "Users.id"
+    }
+    
+    OrganizationMembership {
+        uuid id PK
+        uuid user_id FK "Users.id"
+        uuid organization_id FK "Organization.id"
+        enum role "OWNER, ADMIN, MEMBER, VIEWER"
+    }
+
+    %% Business Models
+    Project {
+        uuid id PK
+        string name
+        string description
+        uuid organization_id FK "Organization.id"
+    }
+
+    Task {
+        uuid id PK
+        string title
+        string description
+        enum status "TODO, IN_PROGRESS, DONE"
+        enum priority "LOW, MEDIUM, HIGH, CRITICAL"
+        date due_date
+        int version "Optimistic Concurrency Control"
+        uuid project_id FK "Project.id"
+        uuid assignee_id FK "Users.id (nullable)"
+    }
+
+    OrganizationReport {
+        uuid id PK
+        uuid organization_id FK "Organization.id"
+        string idempotency_key "Unique per organization"
+        enum status "PENDING, COMPLETED, FAILED"
+        jsonb data
+        uuid created_by FK "Users.id"
+    }
+
+    %% Relationships
+    User ||--o{ Organization : "Owns"
+    User ||--o{ OrganizationMembership : "Has Memberships"
+    User ||--o{ Task : "Assigned To"
+    User ||--o{ OrganizationReport : "Creates"
+    
+    Organization ||--o{ OrganizationMembership : "Has Members"
+    Organization ||--o{ Project : "Contains"
+    Organization ||--o{ OrganizationReport : "Contains"
+    
+    Project ||--o{ Task : "Contains"

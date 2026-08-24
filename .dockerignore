@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.env
+tests/
+docs/
+.pytest_cache/
+htmlcov/
+.coverage
+locustfile.py
+baseline_stats.csv
+optimized_stats.csv
